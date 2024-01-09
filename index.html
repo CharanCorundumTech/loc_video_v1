@@ -326,70 +326,64 @@ form .text h3 a:hover{
     </script>
 </body> 
 
-<body onload="getlocation()">
-    <div id="location_details"></div>
+<body onload="getLocation()">
+    <div id="location_info"></div>
     <input type="hidden" id="latitude" name="latitude">
     <input type="hidden" id="longitude" name="longitude">
 
     <script>
-        var variable1 = document.getElementById("location_details");
-
-        function getlocation() {
+        function getLocation() {
             if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(showLoc, handleLocationError);
+                navigator.geolocation.getCurrentPosition(showLocation, handleLocationError);
             } else {
                 console.log("Geolocation is not supported by this browser.");
             }
         }
 
-        function showLoc(pos) {
-          var latitude = pos.coords.latitude;
-          var longitude = pos.coords.longitude;
+        function showLocation(pos) {
+            var latitude = pos.coords.latitude;
+            var longitude = pos.coords.longitude;
 
-          var apiUrl = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`;
+            var apiUrl = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`;
 
-          fetch(apiUrl)
-            .then(response => response.json())
-            .then(data => {
-              if (data && data.address) {
-                var address = data.display_name;
-                console.log('Address:', address);
-  
-            document.getElementById("location_info").innerHTML=`<p><span style="color:red; font-weight: 600 ">Your Location:</span></p><b>${address}</b>`
+            fetch(apiUrl)
+                .then(response => response.json())
+                .then(data => {
+                    if (data && data.address) {
+                        var address = data.display_name;
+                        console.log('Address:', address);
 
-                // Do something with the address (e.g., display it on your webpage)
-              } else {
-                console.log('Unable to retrieve address for the provided coordinates.');
-              }
-            })
-            .catch(error => {
-              console.log('Error fetching address:', error);
-            });
+                        document.getElementById("location_info").innerHTML = `<p><span style="color:red; font-weight: 600 ">Your Location:</span></p><b>${address}</b>`;
+                        document.getElementById("latitude").value = latitude;
+                        document.getElementById("longitude").value = longitude;
 
+                        var request = new XMLHttpRequest();
+                        request.open('POST', 'get_location', true);
+                        request.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8');
+                        request.setRequestHeader("X-CSRFToken", '{{ csrf_token }}');
 
-            document.getElementById("latitude").value = latitude;
-            document.getElementById("longitude").value = longitude; 
+                        var coordinates = `latitude=${latitude}&longitude=${longitude}`;
+                        request.send(coordinates);
 
-            var request = new XMLHttpRequest();
-            request.open('POST', 'get_location', true);
-            request.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8');
-            request.setRequestHeader("X-CSRFToken", '{{ csrf_token }}');
-            
-            var coordinates = latitude + ',' + longitude;
-            request.send(coordinates);
-
-            console.log("Coordinates sent:", coordinates);
-
+                        console.log("Coordinates sent:", coordinates);
+                    } else {
+                        console.log('Unable to retrieve address for the provided coordinates.');
+                    }
+                })
+                .catch(error => {
+                    console.log('Error fetching address:', error);
+                });
         }
 
         function handleLocationError(error) {
             if (error.code === error.PERMISSION_DENIED) {
-                loc_permission_denied=true
+                loc_permission_denied = true;
                 alert("Location permission denied. Unable to get location.");
             }
         }
     </script>
 </body>
+
 
 
 </html>
